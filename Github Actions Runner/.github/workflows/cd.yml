@@ -1,0 +1,19 @@
+name: CD Pipeline
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
+      
+jobs:
+  pull-image-run-container-ec2:
+    runs-on: self-hosted
+    steps:
+    - name: Login private registry
+      run: sudo docker login ${{ secrets.DOCKER_PRIVATE_REGISTRY_NAME }} -u ${{ secrets.DOCKER_PRIVATE_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_PRIVATE_REGISTRY_PASSWORD }}
+    - name: Pull docker image
+      run: sudo docker pull ${{ secrets.DOCKER_PRIVATE_REGISTRY_NAME }}/developer-blog-be-admin:latest
+    - name: Delete old docker container
+      run: sudo docker rm developer-blog-be-admin || true
+    - name: Run docker container
+      run: sudo docker run -p 1111:1111 -e PORT=1111 -e DB_DIALECT=mysql -e DB_NAME=developer_blog -e DB_USERNAME=admin -e DB_HOST=13.212.114.223 -e DB_PORT=3306 -e DB_PASSWORD=admin@777 docker-registry.store/developer-blog-be-admin
